@@ -1,0 +1,82 @@
+name: openledg
+
+x-app: &app
+  image: openledg-api:local
+  build: .
+
+services:
+  postgres:
+    image: postgres:18.3-alpine
+    environment:
+      POSTGRES_DB: openledg
+      POSTGRES_USER: openledg_owner
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Copy .env.example to .env}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./infra/postgres/init.sh:/docker-entrypoint-initdb.d/10-openledg.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openledg_owner -d openledg"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    <<: *app
+    command: ["--migrate"]
+    environment:
+      ConnectionStrings__Olgp: Host=postgres;Database=openledg;Username=openledg_owner;Password=${POSTGRES_PASSWORD};GSS Encryption Mode=Disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    <<: *app
+    environment:
+      ASPNETCORE_HTTP_PORTS: 8080
+      ConnectionStrings__Olgp: Host=postgres;Database=openledg;Username=openledg_app;Password=${POSTGRES_APP_PASSWORD};GSS Encryption Mode=Disable
+    ports:
+      - "127.0.0.1:${API_PORT:-8080}:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  tigerbeetle-format:
+    image: ghcr.io/tigerbeetle/tigerbeetle:${TIGERBEETLE_VERSION:-0.17.9}
+    entrypoint: ["/bin/sh", "-ec"]
+    command: ["if [ ! -f /data/0_0.tigerbeetle ]; then /tigerbeetle format --cluster=0 --replica=0 --replica-count=1 --development /data/0_0.tigerbeetle; fi"]
+    volumes:
+      - tigerbeetle_data:/data
+    security_opt: ["seccomp=unconfined"]
+    cap_add: ["IPC_LOCK"]
+    restart: "no"
+
+  tigerbeetle:
+    image: ghcr.io/tigerbeetle/tigerbeetle:${TIGERBEETLE_VERSION:-0.17.9}
+    command: ["start", "--addresses=0.0.0.0:3000", "--development", "--cache-grid=256MiB", "/data/0_0.tigerbeetle"]
+    volumes:
+      - tigerbeetle_data:/data
+    ports:
+      - "127.0.0.1:3000:3000"
+    security_opt: ["seccomp=unconfined"]
+    cap_add: ["IPC_LOCK"]
+    depends_on:
+      tigerbeetle-format:
+        condition: service_completed_successfully
+
+  redis:
+    image: redis:8.6-alpine
+    profiles: ["auxiliary"]
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:
+  tigerbeetle_data:

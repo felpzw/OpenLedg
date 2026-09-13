@@ -1,0 +1,31 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - run: dotnet tool restore
+      - run: dotnet restore
+      - run: dotnet build --no-restore
+      - run: dotnet test tests/OpenLedg.Tests --no-build
+      - run: dotnet ef migrations has-pending-model-changes --project src/OpenLedg.Infrastructure
+      - run: cp .env.example .env
+      - run: ./scripts/dev-up.sh
+      - run: curl --retry 10 --retry-delay 2 --retry-all-errors --fail http://localhost:8080/health/ready
+      - run: ./scripts/test-integration.sh --no-build
+      - if: failure()
+        run: docker compose logs --tail=100
+      - if: always()
+        run: docker compose --profile auxiliary down
