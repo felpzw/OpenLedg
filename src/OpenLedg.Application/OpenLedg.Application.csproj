@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../OpenLedg.Domain/OpenLedg.Domain.csproj" />
+  </ItemGroup>
+</Project>

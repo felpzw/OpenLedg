@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OpenLedg.Api/OpenLedg.Api.csproj" />
+    <Project Path="src/OpenLedg.Application/OpenLedg.Application.csproj" />
+    <Project Path="src/OpenLedg.Domain/OpenLedg.Domain.csproj" />
+    <Project Path="src/OpenLedg.Infrastructure/OpenLedg.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OpenLedg.IntegrationTests/OpenLedg.IntegrationTests.csproj" />
+    <Project Path="tests/OpenLedg.Tests/OpenLedg.Tests.csproj" />
+  </Folder>
+</Solution>
