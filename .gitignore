@@ -1,0 +1,17 @@
+**/bin/
+**/bin*/
+**/obj/
+.vs/
+.idea/
+.DS_Store
+.env
+.env.*
+!.env.example
+TestResults/
+artifacts/
+*.user
+*.suo
+*.tigerbeetle
+*.pfx
+*.p12
+*.key
