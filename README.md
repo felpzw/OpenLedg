@@ -1,6 +1,6 @@
 # OpenLedg
 
-Fundação do MVP de pagamentos em .NET 10, ASP.NET Core/Kestrel e PostgreSQL (OLGP),
+Software em .NET 10, ASP.NET Core/Kestrel e PostgreSQL (OLGP),
 com TigerBeetle como destino exclusivo do estado financeiro.
 
 O PostgreSQL guarda perfis demográficos, conformidade, permissões, metadados de
